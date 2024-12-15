@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>London Bus Rush</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #87CEEB;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #f0f0f0;
+      border: 2px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas dimensions
+    canvas.width = 800;
+    canvas.height = 600;
+
+    // Game objects
+    const bus = {
+      x: 50,
+      y: canvas.height / 2,
+      width: 40,
+      height: 20,
+      color: "red",
+      speed: 5
+    };
+
+    const cars = [];
+    const passengers = [];
+
+    const carColors = ["blue", "green", "yellow", "black"];
+
+    let score = 0;
+    let gameOver = false;
+
+    // Create random cars
+    function spawnCar() {
+      const car = {
+        x: canvas.width,
+        y: Math.random() * (canvas.height - 40),
+        width: 40,
+        height: 20,
+        color: carColors[Math.floor(Math.random() * carColors.length)],
+        speed: 3 + Math.random() * 3
+      };
+      cars.push(car);
+    }
+
+    // Create random passengers
+    function spawnPassenger() {
+      const passenger = {
+        x: Math.random() * (canvas.width - 50) + 50,
+        y: Math.random() * (canvas.height - 50) + 50,
+        width: 10,
+        height: 10,
+        color: "gold"
+      };
+      passengers.push(passenger);
+    }
+
+    // Draw objects
+    function drawObject(obj) {
+      ctx.fillStyle = obj.color;
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+
+    // Handle collision detection
+    function isColliding(obj1, obj2) {
+      return (
+        obj1.x < obj2.x + obj2.width &&
+        obj1.x + obj1.width > obj2.x &&
+        obj1.y < obj2.y + obj2.height &&
+        obj1.y + obj1.height > obj2.y
+      );
+    }
+
+    // Update game state
+    function updateGame() {
+      if (gameOver) return;
+
+      // Move cars
+      cars.forEach(car => {
+        car.x -= car.speed;
+        if (car.x + car.width < 0) {
+          car.x = canvas.width;
+          car.y = Math.random() * (canvas.height - 40);
+          car.speed = 3 + Math.random() * 3;
+        }
+
+        // Check collision with bus
+        if (isColliding(bus, car)) {
+          gameOver = true;
+          alert("Game Over! Your score: " + score);
+          document.location.reload();
+        }
+      });
+
+      // Check collision with passengers
+      passengers.forEach((passenger, index) => {
+        if (isColliding(bus, passenger)) {
+          score += 10;
+          passengers.splice(index, 1);
+        }
+      });
+    }
+
+    // Draw game objects
+    function drawGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw bus
+      drawObject(bus);
+
+      // Draw cars
+      cars.forEach(car => drawObject(car));
+
+      // Draw passengers
+      passengers.forEach(passenger => drawObject(passenger));
+
+      // Draw score
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 20);
+    }
+
+    // Game loop
+    function gameLoop() {
+      updateGame();
+      drawGame();
+      if (!gameOver) requestAnimationFrame(gameLoop);
+    }
+
+    // Event listeners for controls
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && bus.y > 0) bus.y -= bus.speed;
+      if (e.key === 'ArrowDown' && bus.y + bus.height < canvas.height) bus.y += bus.speed;
+    });
+
+    // Initialize game
+    function init() {
+      for (let i = 0; i < 5; i++) spawnCar();
+      for (let i = 0; i < 3; i++) spawnPassenger();
+      gameLoop();
+    }
+
+    init();
+  </script>
+</body>
+</html>
